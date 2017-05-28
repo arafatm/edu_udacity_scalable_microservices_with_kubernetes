@@ -249,53 +249,51 @@ Solve for installing and running apps across multiple environments
 
 ### Installing Images with Docker
 
-```
-sudo apt-get install docker.io
+    sudo apt-get install docker.io
 
-  # Check Docker images
+Check Docker images
 
-sudo docker images
+    sudo docker images
 
-  # Pull nginx image
+Pull nginx image
 
-sudo docker pull nginx:1.10.0
-sudo docker images
+    sudo docker pull nginx:1.10.0
 
-  # Verify the versions match
+    sudo docker images
 
-sudo dpkg -l | grep nginx
+Verify the versions match
 
-  # If your version of nginx from native package and Docker are different,
-  # you need to update the VM instance:
+  sudo dpkg -l | grep nginx
 
-sudo apt-get update
-sudo apt-get install nginx
-```
+If your version of nginx from native package and Docker are different, you need 
+to update the VM instance:
+
+    sudo apt-get update
+    sudo apt-get install nginx
 
 ### Running Images with Docker
 
-```
-  # Run the first instance
 
-sudo docker run -d nginx:1.10.0
+Run the first instance
 
-  # Check if it's up
+    sudo docker run -d nginx:1.10.0
 
-sudo docker ps
+Check if it's up
 
-  # Run a different version of nginx
+    sudo docker ps
 
-sudo docker run -d nginx:1.9.3
+Run a different version of nginx
 
-  # Run another version of nginx
+    sudo docker run -d nginx:1.9.3
 
-sudo docker run -d nginx:1.10.0
+Run another version of nginx
 
-  # Check how many instances are running
+    sudo docker run -d nginx:1.10.0
 
-sudo docker ps
-sudo ps aux | grep nginx
-```
+Check how many instances are running
+
+    sudo docker ps
+    sudo ps aux | grep nginx
 
 What's with the container names?
 
@@ -547,22 +545,21 @@ sheet](http://kubernetes.io/docs/user-guide/kubectl-cheatsheet/)
 - provide shared namespace
 - One IP per pod
 
-```
-    --------------------- 172.10.1.100 --------
-    |                                         |
-    |              ------------               |
-    |            / |   nginx  |               |
-    |           |  ------------               |
-    |           |                             |
-    |           |  ------------               |
-    |            \ | monolith |               |
-    |              ------------               |
-    |  POD                                    |
-    |      _____       _______       _____    |
-    |     (_____)     (_______)     (_____)   |
-    ------| GCE | --- | iSCSI | --- | NFS | ---
-          -------     ---------     -------
-```
+
+      --------------------- 172.10.1.100 --------
+      |                                         |
+      |              ------------               |
+      |            / |   nginx  |               |
+      |           |  ------------               |
+      |           |                             |
+      |           |  ------------               |
+      |            \ | monolith |               |
+      |              ------------               |
+      |  POD                                    |
+      |      _____       _______       _____    |
+      |     (_____)     (_______)     (_____)   |
+      ------| GCE | --- | iSCSI | --- | NFS | ---
+            -------     ---------     -------
 
 ### Creating Pods
 
@@ -644,9 +641,9 @@ See `cat pods/healthy-monolith.yaml` for config on how mhc is configured
 - `readinessProbe`
 - `livenessProbe`
 
-`kubectl describe pods healthy-monolith | grep Readiness`
+    kubectl describe pods healthy-monolith | grep Readiness
 
-`kubectl describe pods healthy-monolith | grep Liveness`
+    kubectl describe pods healthy-monolith | grep Liveness
 
 ### App Config and Security Overview
 
@@ -660,12 +657,112 @@ Secrets - http://kubernetes.io/docs/user-guide/secrets/
 
 ### Creating Secrets
 
+    ls tls
 
+The cert.pem and key.pem files will be used to secure traffic on the monolith 
+server and the ca.pem will be used by HTTP clients as the CA to trust. Since 
+the certs being used by the monolith server where signed by the CA represented 
+by ca.pem, HTTP clients that trust ca.pem will be able to validate the SSL 
+connection to the monolith server.
+
+#### Use kubectl
+
+to create the tls-certs secret from the TLS certificates stored under the tls 
+directory:
+
+    kubectl create secret generic tls-certs --from-file=tls/
+
+kubectl will create a key for each file in the tls directory under the 
+tls-certs secret bucket. Use the kubectl describe command to verify that:
+
+    kubectl describe secrets tls-certs
+
+Next we need to create a configmap entry for the proxy.conf nginx configuration 
+file using the kubectl create configmap command:
+
+    kubectl create configmap nginx-proxy-conf --from-file=nginx/proxy.conf
+
+Use the kubectl describe configmap command to get more details about the 
+nginx-proxy-conf configmap entry:
+
+    kubectl describe configmap nginx-proxy-conf
+
+#### TLS and SSL
+
+TLS and SSL can be confusing topics. Heres a good primer for understanding the 
+basics: https://en.wikipedia.org/wiki/Transport_Layer_Security
 
 ### Accessing a Secure HTTPS Endpoint
+
+
+
+    cat pods/secure-monolith.yaml
+
+Note
+- `lifecycle` to gracefully shutdown ngins
+- `volumeMounts` to access secrets and configMaps
+- `containers` to see we're running 2 containers
+
+    kubectl create -f pods/secure-monolith.yaml
+
+    kubectl get pods secure-monolith
+
+    kubectl port-forward secure-monolith 10443:443
+
+    curl --cacert tls/ca.pem https://127.0.0.1:10443
+
+    kubectl logs -c nginx secure-monolith
+
+
 ### Services Overview
-### Creating a Service
+
+Services overview - http://kubernetes.io/docs/user-guide/services/
+- stable endpoints for pods (ip might change when refreshed)
+
+By defining a service, we can apply labels to pods and add functionality to 
+them based on labels
+
+    cat services/monolith.yaml
+
+Note
+- `kind: Service`
+- `selector` find and expose pods with the labels `app`, `secure`
+- `nodePort`
+
+    kubectl create -f services/monolith.yaml
+
+Set gcloud firewall rules to allow access by port
+
+    gcloud compute firewall-rules create allow-monolith-nodeport --allow=tcp:31000
+
+Check running gcloud instances and copy an external ip to test port forwarding
+
+    gcloud compute instances list
+
+The next command won't work because ...
+
+    curl -k https://<external ip>:31000
+
 ### Adding Labels to Pods
+
+    kubectl get pods -l "app=monolith"
+
+    kubectl get pods -l "app=monolith,secure=enabled"
+
+    kubectl label pods secure-monolith "secure=enabled"
+
+Check label was applied
+
+    kubectl describe pods secure-monolith |grep Labels
+
+Check endpoinds
+
+    kubectl describe pods secure-monolith |grep Endpoints
+
+Now this curl command will work
+
+    curl -k https://<external ip>:31000
+
 ### Lesson 3 Outro
 
 ## Deploying Microservices
