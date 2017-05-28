@@ -551,17 +551,216 @@ Repeat for all images you created - monolith, auth and hello!
 ## Kubernetes
 
 ### Deep Dive into Architecture
-### How I first learned about K8s
+
+Challenges:
+- conway's law: have to change org/arch practice
+  - org bottlenecks become tech bottlenecks
+- require more automation and systems that track changes
+
 ### What is Kubenetes
+
+Kubernetes
+- app config
+- service discovery
+- managing updates
+- monitoring
+
+Treat the cluster as a logical machine
+
 ### Setting up Kubernetes for this course
+
+<details>
+<summary>
+Provision a Kubernetes Cluster with GKE using gcloud
+</summary>
+<p>
+
+    cd $GOPATH/src/github/com/udacity/ud615/kubernetes
+
+:caution: At any time you can clean up by running the `cleanup.sh` script
+
+To complete the work in this course you going to need some tools. Kubernetes 
+can be configured with many options and add-ons, but can be time consuming to 
+bootstrap from the ground up. In this section you will bootstrap Kubernetes 
+using Google Container Engine (GKE).
+
+GKE is a hosted Kubernetes by Google. GKE clusters can be customized and 
+supports different machine types, number of nodes, and network settings.
+
+Use the following command to create your cluster for use for the rest of this 
+course.
+
+    gcloud container clusters create k0
+
+</p>
+</details> 
+
 ### Kubernetes Intro Demo
+
+<details>
+<summary>
+Deploy first pod with k8s
+</summary>
+<p>
+Launch a single instance:
+
+    kubectl run nginx --image=nginx:1.10.0
+
+Get pods
+
+    kubectl get pods
+
+Expose nginx
+
+    kubectl expose deployment nginx --port 80 --type LoadBalancer
+
+List services
+
+    kubectl get services
+
+[Kubernetes command cheat 
+sheet](http://kubernetes.io/docs/user-guide/kubectl-cheatsheet/)
+
+</p>
+</details>
+
 ### Pods Intro
+
+**Pods** := logical application
+- one or more containers and volumes
+- provide shared namespace
+- One IP per pod
+
+    --------------------- 172.10.1.100 --------
+    |                                         |
+    |              ------------               |
+    |            / |   nginx  |               |
+    |           |  ------------               |
+    |           |                             |
+    |           |  ------------               |
+    |            \ | monolith |               |
+    |              ------------               |
+    |  POD                                    |
+    |      _____       _______       _____    |
+    |     (_____)     (_______)     (_____)   |
+    ------| GCE | --- | iSCSI | --- | NFS | ---
+          -------     ---------     -------
+
 ### Creating Pods
+
+<details>
+<summary>
+Create a pod and explore
+</summary>
+<p>
+
+Explore config file
+
+    cat pods/monolith.yaml
+
+Note the following
+- `args`
+- `ports`
+- `resources`
+
+Create the monolith pod
+
+    kubectl create -f pods/monolith.yaml
+
+Examine pods
+
+    kubectl get pods
+
+Use the kubectl describe command to get more information about the monolith 
+pod.
+
+    kubectl describe pods monolith
+
+</p>
+</details>
+
 ### Interacting with Pods
-### MHC Overview
-### Quiz: MHC
+
+Pods cannot be accessed externally unless we `kubectl port-forward`
+
+<details>
+<summary>
+Set up port-forward and interact with pod
+</summary>
+<p>
+
+Cloud shell 1: set up port-forwarding
+
+    kubectl port-forward monolith 10080:80
+
+Open new Cloud Shell session 2
+
+    curl http://127.0.0.1:10080
+
+    curl http://127.0.0.1:10080/secure
+
+Cloud shell 2 - log in
+
+    curl -u user http://127.0.0.1:10080/login
+
+    curl -H "Authorization: Bearer <token>" http://127.0.0.1:10080/secure
+
+View logs
+
+    kubectl logs -f monolith
+
+In Cloud Shell 3
+
+    curl http://127.0.0.1:10080
+
+In Cloud Shell 2
+
+    Exit log watching (Ctrl-C)
+
+You can use the kubectl exec command to run an interactive shell inside the 
+monolith Pod. This can come in handy when you want to troubleshoot from within 
+a container:
+
+    kubectl exec monolith --stdin --tty -c monolith /bin/sh
+
+For example, once we have a shell into the monolith container we can test 
+external connectivity using the ping command.
+
+    ping -c 3 google.com
+
+When youre done with the interactive shell be sure to logout.
+
+    exit
+</p>
+</details>
+
+### MHC (Moniting and Health Checks) Overview
+
+[MHC User 
+Guide](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/)
+
+See `cat pods/healthy-monolith.yaml` for config on how mhc is configured
+- `readinessProbe`
+- `livenessProbe`
+
+`kubectl describe pods healthy-monolith | grep Readiness`
+
+`kubectl describe pods healthy-monolith | grep Liveness`
+
 ### App Config and Security Overview
+
+Config docs - http://kubernetes.io/docs/user-guide/configmap/
+
+Secrets - http://kubernetes.io/docs/user-guide/secrets/
+- `kubectl create secret generic tls-certs --from-file=tls/`
+- ^ gets mounted in the pod at `/etc/tls`
+
+![Secrets](images/secrets.png)
+
 ### Creating Secrets
+
+
+
 ### Accessing a Secure HTTPS Endpoint
 ### Services Overview
 ### Creating a Service
