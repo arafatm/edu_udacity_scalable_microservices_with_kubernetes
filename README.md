@@ -22,12 +22,9 @@ Microservices := architecture approach to make software
 
 ### Setup GCE and Enable Cloud Shell
 
-<details>
-<summary>In this section you will create a Google Compute Engine (GCE) account.
+In this section you will create a Google Compute Engine (GCE) account.
 GCE will allow you to the create VMs, Networks, and Storage volumes required
-for this workshop.</summary>
-
-<p>
+for this workshop.
 
 GCE also provides the [Cloud Shell](https://cloud.google.com/shell/docs)
 computing environment that will be used complete the labs.
@@ -100,9 +97,6 @@ Get the code:
     cd $GOPATH/src/github.com/udacity
     git clone https://github.com/udacity/ud615
 
-</p></details>
-
-
 ### Build and Interact with Monolith
 
 Sample app is running 3 services
@@ -111,12 +105,6 @@ Sample app is running 3 services
 - Auth Service
 
 Note: Monolith is self-contained. Check `/vendor`
-
-<details>
-<summary>
-#### Commands to run
-</summary>
-<p>
 
 ##### On shell 1 - build the app:
 
@@ -169,9 +157,6 @@ Check that it worked:
     ls vendor 
     cat vendor/vendor.json
 
-</p>
-</details>
-
 ### 12 Facter
 
 Best practice for building SaaS
@@ -181,12 +166,6 @@ Best practice for building SaaS
 - scalable: to user demand
 
 ### Refactor to MSA
-
-<details>
-<summary>
-Refactor to MSA
-</summary>
-<p>
 
 Shell 1 - build and run the hello service
 
@@ -206,8 +185,6 @@ Shell 3 - interact with the auth and hello microservices
 
     curl -H "Authorization:  Bearer $TOKEN" http://127.0.0.1:10082/secure
 
-
-</p></details>
 
 ### JWT: JSON Web Tokens
 
@@ -231,12 +208,6 @@ How does it work?
 ## Building the Containers with Docker
 
 ### Installing apps with native OS tools
-
-<details>
-<summary>
-#### Commands to run
-</summary>
-<p>
 
 Cloud shell - set compute/zone
 - Google Cloud shell is an ephemeral instance and will reset if you don't use it for more than 30 minutes. That is why you might have to set some configuration values again
@@ -270,8 +241,6 @@ Check that it's running
 
     curl http://127.0.0.1
 
-</p></details>
-
 ### Container Overview
 
 Solve for installing and running apps across multiple environments
@@ -280,11 +249,6 @@ Solve for installing and running apps across multiple environments
 
 ### Installing Images with Docker
 
-<details>
-<summary>
-Commands to run (on the VM Instance)
-</summary>
-<p>
 ```
 sudo apt-get install docker.io
 
@@ -307,17 +271,9 @@ sudo dpkg -l | grep nginx
 sudo apt-get update
 sudo apt-get install nginx
 ```
-</p>
-
-</details>
 
 ### Running Images with Docker
 
-<details>
-<summary>
-We can run multiple versions and instances of the same app in a container
-</summary>
-<p>
 ```
   # Run the first instance
 
@@ -352,15 +308,8 @@ and hackers. The combination of the names and adjectives is random, except for
 one case. Want to see what the exception is? Check it out in the [Docker source
 code!](https://github.com/moby/moby/blob/master/pkg/namesgenerator/names-generator.go)
 
-</p></details>
-
 ### Talking to Docker instances
 
-<details>
-<summary>
-Inspect running docker instances and manage them
-</summary>
-<p>
 List all running container processes
 
     sudo docker ps
@@ -414,8 +363,6 @@ Remove the docker containers from the system
     # or
     sudo docker rm $(sudo docker ps -aq)
 
-</p>
-</details>
 ### Creating your own images overview
 
 Inspect `cat app/hello/Dockerfile` for a sample
@@ -431,11 +378,6 @@ Inspect `cat app/hello/Dockerfile` for a sample
 
 ### Create An Image
 
-<details>
-<summary>
-Containerize the monolith app
-</summary>
-<p>
 Install Go
 
     wget https://storage.googleapis.com/golang/go1.6.2.linux-amd64.tar.gz
@@ -504,8 +446,6 @@ RHEL](http://www.projectatomic.io/blog/2015/08/why-we-dont-let-non-root-users-ru
 
 :caution: Do the same for `hello` and `auth` apps
 
-</p></details>
-
 ### Public vs Private Registries
 
 Registries:
@@ -515,10 +455,6 @@ Registries:
 
 ### Push Images
 
-<details>
-<summary>
-</summary>
-<p>
 See all images
 
     sudo docker images
@@ -545,9 +481,6 @@ https://hub.docker.com/register/ Login and use the docker push command
 
 Repeat for all images you created - monolith, auth and hello!
 
-</p>
-</details>
-
 ## Kubernetes
 
 ### Deep Dive into Architecture
@@ -569,12 +502,6 @@ Treat the cluster as a logical machine
 
 ### Setting up Kubernetes for this course
 
-<details>
-<summary>
-Provision a Kubernetes Cluster with GKE using gcloud
-</summary>
-<p>
-
     cd $GOPATH/src/github/com/udacity/ud615/kubernetes
 
 :caution: At any time you can clean up by running the `cleanup.sh` script
@@ -592,16 +519,8 @@ course.
 
     gcloud container clusters create k0
 
-</p>
-</details> 
-
 ### Kubernetes Intro Demo
 
-<details>
-<summary>
-Deploy first pod with k8s
-</summary>
-<p>
 Launch a single instance:
 
     kubectl run nginx --image=nginx:1.10.0
@@ -620,9 +539,6 @@ List services
 
 [Kubernetes command cheat 
 sheet](http://kubernetes.io/docs/user-guide/kubectl-cheatsheet/)
-
-</p>
-</details>
 
 ### Pods Intro
 
@@ -648,12 +564,6 @@ sheet](http://kubernetes.io/docs/user-guide/kubectl-cheatsheet/)
 
 ### Creating Pods
 
-<details>
-<summary>
-Create a pod and explore
-</summary>
-<p>
-
 Explore config file
 
     cat pods/monolith.yaml
@@ -676,18 +586,9 @@ pod.
 
     kubectl describe pods monolith
 
-</p>
-</details>
-
 ### Interacting with Pods
 
 Pods cannot be accessed externally unless we `kubectl port-forward`
-
-<details>
-<summary>
-Set up port-forward and interact with pod
-</summary>
-<p>
 
 Cloud shell 1: set up port-forwarding
 
@@ -731,8 +632,6 @@ external connectivity using the ping command.
 When youre done with the interactive shell be sure to logout.
 
     exit
-</p>
-</details>
 
 ### MHC (Moniting and Health Checks) Overview
 
