@@ -547,6 +547,7 @@ sheet](http://kubernetes.io/docs/user-guide/kubectl-cheatsheet/)
 - provide shared namespace
 - One IP per pod
 
+```
     --------------------- 172.10.1.100 --------
     |                                         |
     |              ------------               |
@@ -561,6 +562,7 @@ sheet](http://kubernetes.io/docs/user-guide/kubectl-cheatsheet/)
     |     (_____)     (_______)     (_____)   |
     ------| GCE | --- | iSCSI | --- | NFS | ---
           -------     ---------     -------
+```
 
 ### Creating Pods
 
