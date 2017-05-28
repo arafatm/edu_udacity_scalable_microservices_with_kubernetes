@@ -286,21 +286,21 @@ Commands to run (on the VM Instance)
 ```
 sudo apt-get install docker.io
 
-# Check Docker images
+  # Check Docker images
 
 sudo docker images
 
-# Pull nginx image
+  # Pull nginx image
 
 sudo docker pull nginx:1.10.0
 sudo docker images
 
-# Verify the versions match
+  # Verify the versions match
 
 sudo dpkg -l | grep nginx
 
-# If your version of nginx from native package and Docker are different,
-# you need to update the VM instance:
+  # If your version of nginx from native package and Docker are different,
+  # you need to update the VM instance:
 
 sudo apt-get update
 sudo apt-get install nginx
@@ -313,27 +313,27 @@ sudo apt-get install nginx
 
 <details>
 <summary>
-Commands to run on the VM Instance
+We can run multiple versions and instances of the same app in a container
 </summary>
 <p>
 ```
-# Run the first instance
+  # Run the first instance
 
 sudo docker run -d nginx:1.10.0
 
-# Check if it's up
+  # Check if it's up
 
 sudo docker ps
 
-# Run a different version of nginx
+  # Run a different version of nginx
 
 sudo docker run -d nginx:1.9.3
 
-# Run another version of nginx
+  # Run another version of nginx
 
 sudo docker run -d nginx:1.10.0
 
-# Check how many instances are running
+  # Check how many instances are running
 
 sudo docker ps
 sudo ps aux | grep nginx
@@ -352,16 +352,219 @@ code!](https://github.com/moby/moby/blob/master/pkg/namesgenerator/names-generat
 
 </p></details>
 
-
 ### Talking to Docker instances
+
+<details>
+<summary>
+Inspect running docker instances and manage them
+</summary>
+<p>
+List all running container processes
+
+    sudo docker ps
+
+For use in shell scripts you might want to just get a list of container IDs (-a
+stands for all instances, not just running, and -q is for "quiet" - show just
+the numeric ID):
+
+    sudo docker ps -aq
+
+Inspect the container
+
+You can use either CONTAINER ID or NAMES field, for example for a `sudo docker
+ps` output like this:
+
+    CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+    f86cf066c304        nginx:1.10.0        "nginx -g 'daemon off"   8 minutes ago       Up 8 minutes        80/tcp, 443/tcp     sharp_bartik
+
+You can use either of the following commands:
+
+    sudo docker inspect f86cf066c304
+    # or
+    sudo docker inspect sharp_bartik
+
+Connect to the nginx using the internal IP
+
+Get the internal IP address either copying from the full inspect file or by
+assigning it to a shell variable:
+
+    CN="sharp_bartik"
+    CIP=$(sudo docker inspect --format '{{ .NetworkSettings.IPAddress }}' $CN)
+    curl  http://$CIP
+
+You can also get all instance IDs and their corresponding IP addresses by doing this:
+
+    sudo docker inspect -f '{{.Name}} - {{.NetworkSettings.IPAddress }}' $(sudo docker ps -aq)
+
+Stop an instance
+
+    sudo docker stop <cid>
+    # or
+    sudo docker stop $(sudo docker ps -aq)
+
+Verify no more instances running
+
+    sudo docker ps
+
+Remove the docker containers from the system
+
+    sudo docker rm <cid>
+    # or
+    sudo docker rm $(sudo docker ps -aq)
+
+</p>
+</details>
 ### Creating your own images overview
+
+Inspect `cat app/hello/Dockerfile` for a sample
+
+`FROM alpine:3.1` to specify base image
+- alpine is minimal and is used for official docker images
+
+`MAINTAINER`
+
+`ADD hello /usr/bin/hello` to add hello app to given path
+
+`ENTRYPOINT ["hello"]` to specify which binary to run
+
 ### Create An Image
-### Create the Other Containers
+
+<details>
+<summary>
+Containerize the monolith app
+</summary>
+<p>
+Install Go
+
+    wget https://storage.googleapis.com/golang/go1.6.2.linux-amd64.tar.gz
+    rm -rf /usr/local/bin/go
+    sudo tar -C /usr/local -xzf go1.6.2.linux-amd64.tar.gz
+    export PATH=$PATH:/usr/local/go/bin
+    export GOPATH=~/go
+
+Get the app code
+
+    mkdir -p $GOPATH/src/github.com/udacity
+    cd $GOPATH/src/github.com/udacity
+    git clone https://github.com/udacity/ud615.git
+
+Build a static binary of the monolith app
+
+    cd ud615/app/monolith
+    go get -u
+    go build --tags netgo --ldflags '-extldflags "-lm -lstdc++ -static"'
+
+Why did you have to build the binary with such an ugly command line?
+
+You have to explicitly make the binary static. This is really important in the
+Docker community right now because alpine has a different implementation of
+libc. So your go binary wouldn't have had the lib it needed if it wasn't
+static. You created a static binary so that your application could be
+self-contained.
+
+Create a container for the app
+
+    cat Dockerfile
+
+Build the app container
+
+    sudo docker build -t monolith:1.0.0 .
+
+List the monolith image
+
+    sudo docker images monolith:1.0.0
+
+Run the monolith container and get it's IP
+
+    sudo docker run -d monolith:1.0.0
+    sudo docker inspect <container name or cid>
+
+or
+
+    CID=$(sudo docker run -d monolith:1.0.0)
+    CIP=$(sudo docker inspect --format '{{ .NetworkSettings.IPAddress }}' ${CID})
+
+Test the container
+
+    curl <the container IP>
+
+or
+
+    curl $CIP
+
+Important note on security
+
+If you are tired of typing "sudo" in front of all Docker commands, and confused
+why a lot of examples don't have that, please read the following article about
+implications on security [Why we don't let non-root users run Docker in CentOS,
+Fedora, or
+RHEL](http://www.projectatomic.io/blog/2015/08/why-we-dont-let-non-root-users-run-docker-in-centos-fedora-or-rhel/)
+
+:caution: Do the same for `hello` and `auth` apps
+
+</p></details>
+
 ### Public vs Private Registries
+
+Registries:
+- https://hub.docker.com/
+- https://quay.io/
+- https://cloud.google.com/container-registry/docs/
+
 ### Push Images
-### Lesson 2 Outro
+
+<details>
+<summary>
+</summary>
+<p>
+See all images
+
+    sudo docker images
+
+Docker tag command help
+
+    docker tag -h
+
+Add your own tag
+
+    sudo docker tag monolith:1.0.0 <your username>/monolith:1.0.0
+
+For example (you can rename too!)
+
+    sudo docker tag monolith:1.0.0 udacity/example-monolith:1.0.0
+
+Create account on Dockerhub
+
+To be able to push images to Dockerhub you need to create an account there -
+https://hub.docker.com/register/ Login and use the docker push command
+
+    sudo docker login
+    sudo docker push udacity/example-monolith:1.0.0
+
+Repeat for all images you created - monolith, auth and hello!
+
+</p>
+</details>
 
 ## Kubernetes
+
+### Deep Dive into Architecture
+### How I first learned about K8s
+### What is Kubenetes
+### Setting up Kubernetes for this course
+### Kubernetes Intro Demo
+### Pods Intro
+### Creating Pods
+### Interacting with Pods
+### MHC Overview
+### Quiz: MHC
+### App Config and Security Overview
+### Creating Secrets
+### Accessing a Secure HTTPS Endpoint
+### Services Overview
+### Creating a Service
+### Adding Labels to Pods
+### Lesson 3 Outro
 
 ## Deploying Microservices
 
