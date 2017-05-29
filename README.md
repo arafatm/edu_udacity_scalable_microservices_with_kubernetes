@@ -767,6 +767,105 @@ Now this curl command will work
 
 ## Deploying Microservices
 
+### Deployment Overview
+
+Deployments
+- declarative way to drive current state towards desired state
+- abstract low level details of managing pods
+
+### Creating Deployments
+
+    cat deployments/auth.yaml
+
+Specify `replicas`, `labels`, `images`
+
+Deploy auth
+
+    kubectl create -f deployments/auth.yaml
+
+    kubectl describe deployments auth
+
+    kubectl create -f services/auth.yaml
+
+Deploy hello
+
+    kubectl create -f deployments/hello.yaml
+
+    kubectl create -f services/hello.yaml
+
+Configure nginx
+
+    kubectl create configmap nginx-frontend-conf --from-file=nginx/frontend.conf
+
+    kubectl create -f deployments/frontend.yaml
+
+    kubectl create -f services/frontend.yaml
+
+Grab external-ip
+
+    kubectl get services frontend
+
+    curl -k https://<external ip>
+
+### Scaling Deployments
+
+    kubectl get replicasets
+
+To see how many replicats of hello app is running
+
+    kubectl get pods -l "app=hello,track=stable"
+
+Update `replicas` field to scale up
+
+    vim deployments/hello.yaml
+
+Update `replicas` field
+
+Update the replicas
+
+    kubectl apply -f deployments/hello.yaml
+
+Look under `CURRENT` from output above
+
+To see new replicas
+
+    kubectl get pods
+
+Check deployment updated to correct # of replicas
+
+    kubectl describe deployment hello
+
+Look at row `Replicas:`
+
+We now have multiple copies of "hello"
+
+### Rolling Updates
+
+On update, `app v1` is rolled back one at a time and `app v2` comes online to 
+replace each instance of v1
+
+Modify the deployments
+
+    vi deployments/auth.yaml
+
+Update the `image` field to use `v2`
+    
+    kubectl apply -f deployments/auth.yaml
+
+To view updates
+
+    kubectl describe deployments auth 
+
+Look at `RollingupdateStrategy` and `NewReplicaSet`
+    
+    kubectl get pods
+
+Look at `AGE` to see that it's new
+
+To verify auth pod is running new version of container 
+
+    kubectl describe pods auth-<xxx>
+
 ## Resources
 
 #### People
