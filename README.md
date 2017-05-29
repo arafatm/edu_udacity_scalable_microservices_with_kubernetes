@@ -1,6 +1,8 @@
 # Udacity: Scalable Microservices with Kubernetes
 
-https://classroom.udacity.com/courses/ud615
+[Udacity course](https://classroom.udacity.com/courses/ud615)
+
+[Summary](quick_summary.md)
 
 ## Introduction to Microservices
 
@@ -263,7 +265,7 @@ Pull nginx image
 
 Verify the versions match
 
-  sudo dpkg -l | grep nginx
+    sudo dpkg -l | grep nginx
 
 If your version of nginx from native package and Docker are different, you need 
 to update the VM instance:
