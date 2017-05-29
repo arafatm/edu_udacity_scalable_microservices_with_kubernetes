@@ -16,7 +16,7 @@ Install latest minikube from https://github.com/kubernetes/minikube/releases
     https://storage.googleapis.com/minikube/releases/v<release>/minikube-<os>-<platform>  \
     && chmod +x minikube && sudo mv minikube /usr/local/bin/
 
-Install kubectl
+Install kubectl from https://github.com/kubernetes/kubernetes/releases
 
     curl -Lo kubectl \
     http://storage.googleapis.com/kubernetes-release/release/<release>/bin/<os>/<platform>/kubectl \
