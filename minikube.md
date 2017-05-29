@@ -34,7 +34,7 @@ Install kubectl from https://github.com/kubernetes/kubernetes/releases
 
     minikube start
 
-    kubectl run hello-minikube --image=gcr.io/google_containers
+    kubectl run hello-minikube --image=gcr.io/google_containers/echoserver
 
     kubectl get pods
 
